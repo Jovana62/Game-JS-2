@@ -1,0 +1,592 @@
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<meta http-equiv="X-UA-Compatible" content="ie=edge">
+	
+	<title>Измешани Букви</title>
+
+	<script src="lib/phaser.js"></script>
+	<script src="main.js"></script>
+
+	<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.9.0/css/all.css">
+	<link rel="stylesheet" href="style.css">
+
+
+
+</head>
+
+<body>
+
+	<div class="loader">
+      <div class="text"></div>
+       <label class="percent">100%</label>
+      <div class="progress-bar">
+        <div class="progress"></div>
+      </div>
+    </div>
+
+    <audio id="mySong">
+      <source src="assets/Monkeys-Spinning-Monkeys.mp3" type="audio/mp3">
+    </audio>
+
+
+	<nav class="nav">
+    
+	<!--секција за музичка икона-->
+	<section class="fa" id="icon">
+		<!--<i class="fas fa-volume-up" style="color: #191919;" id="icon"></i>-->
+    	<!--<i class="fas fa-volume-mute" style="color: #191919;" id="icon"></i>-->
+    </section>
+
+
+    <div id="rules">
+      <p class="lead">Пронајди го и запиши го зборот од дадените измешани букви.</p>
+      <div class="instr">
+		  	<p>Напиши <small>(состави)</small> збор од дадените букви.</p>
+			<p>За секој погоден збор, добиваш еден поен...За секој погрешен, ти се одзема поен.</p>  
+			<p>Добиј над 3 точни одговори <small>(поени)</small> и одиш на нареден Level.</p>
+			<p>Промаши еден збор 3 пати и кликни на копчето Ресет.</p>
+			<p>Заврши го 5-тиот Level и ја победуваш играта.</p>
+			<p>СО СРЕЌА!</p>
+	  </div>
+	  <div class="credits">
+		  	<p>Играта е креирана од:</p>
+			<p><small>Ивона Вареловска (ivona.102321@student.ugd.edu.mk)</small></p>
+			<p><small>Јована Јордановска (jovana.102350@student.ugd.edu.mk)</small></p>
+			<p>Ментор:</p>
+			<p><small>Доц. д-р Наташа Коцеска</small></p>
+	  </div>
+
+      	<button id="play-btn">СТАРТ</button><br><br>
+	  	<button id="instr-btn">ИНСТРУКЦИИ</button><br><br>
+	  	<button id="credits-btn">КРЕДИТИ</button>
+    </div>
+	<h1>ИЗМЕШАНИ<br>БУКВИ</h1>	<!--h1 го ставам последен (под rules класата) за да се покажува најнапред, инаку ќе се појавува позади класата--> 
+  </nav>
+
+  <div id="game-container" class="hidden">
+    <p>Level: <span id="level">1</span></p>
+    <p>Поени: <span id="score">0</span></p>
+    <p>Обиди: <span id="attempts">0</span></p>
+    <p id="info"></p>
+
+    <div id="guess-container">
+      <p id="scrambled-word"></p>
+
+      <input id="user-guess" type="text" placeholder="Вметни ја твојата претпоставка">
+      <button id="submit">Потврди</button>
+      <button id="reset-btn">Ресет</button>
+	  
+	  
+	  <br><br><br>
+      <button id="menu" onclick="goToMenu()">МЕНИ</button>
+    </div>
+
+  </div>
+  
+
+	<script type="text/javascript">
+
+		src = "https://use.fontawesome.com/releases/v5.9.0/css/all.css";
+
+		//лоадинг
+		var text = document.querySelector('.text');
+		var percent = document.querySelector('.percent');
+		var progress = document.querySelector('.progress');
+		var count = 4;
+		var per = 16;
+		var loading = setInterval(animate, 20); //брзина на лоадирање
+		function animate(){
+		if(count == 100 && per == 400){
+			text.textContent = "";
+			text.style.fontSize = "70px";
+			text.classList.add("add");
+			clearInterval(loading);
+		}else{
+			per = per + 4;
+			count = count + 1;
+			progress.style.width = per + 'px';
+			percent.textContent = count + '%';
+		}
+		}
+		
+		const loader = document.querySelector('.loader');
+		const nav = document.querySelector('.nav');
+
+		function init() {
+		setTimeout(() => {
+			loader.style.opacity = 0;
+			loader.style.display = 'none';
+
+			nav.style.display = 'block';
+			nav.style.opacity = 1;
+			mySong.play();	// автоматско почнување на песната по лоадингот
+		}, 2000);
+		}
+
+		init();
+
+		//музика
+		var mySong = document.getElementById("mySong");
+		var icon = document.getElementById("icon");
+		
+		icon.innerHTML = "&#xf6a9";	// за да се прикаже mute иконката горе десно
+		icon.onclick = function(){
+			
+			//mySong.play();
+			if (mySong.paused) {
+			mySong.play();
+			icon.innerHTML = "&#xf6a9";	// музичка икона_1
+			}
+			else {
+			mySong.pause();
+			icon.innerHTML = "&#xf028";	// музичка икона_2
+			}
+		}
+
+
+
+
+		const userGuess = document.getElementById("user-guess");
+		const submitBtn = document.getElementById("submit");
+		const usersWord = document.getElementById("scrambled-word");
+		const info = document.getElementById("info");
+		const levelOutput = document.getElementById("level");
+		const scoreOutput = document.getElementById("score");
+		const attemptsOutput = document.getElementById("attempts");
+		const gameContainer = document.getElementById("game-container");
+		const guessContainer = document.getElementById("guess-container");
+		const rules = document.getElementById("rules");
+		const playBtn = document.getElementById("play-btn");
+		const resetBtn = document.getElementById("reset-btn");
+		const instrBtn = document.getElementById("instr-btn");
+		const instr = document.querySelector('.instr');
+		const creditsBtn = document.getElementById("credits-btn");
+		const credits = document.querySelector('.credits');
+
+		let level = 1;
+		let score = 0;
+		let word;
+		let attempts = 0;
+		let correct = 0;
+
+		const lvlOneWords = [
+		"пет",
+		"лек",
+		"леб",
+		"мед",
+		"гол",
+		"кош",
+		"заб",
+		"црв",
+		"три",
+		"шал",
+		"коњ",
+		"лав",
+		"шах",
+		"лош",
+		"два",
+		"бик",
+		"рак",
+		"беж",
+		"сом",
+		"чип",
+		"хор",
+		"код",
+		"луд",
+		"кал",
+		"сув",
+		"око",
+		"дух",
+		"џин",
+		"сто",
+		"џез",
+		"сок",
+		"крт",
+		"ноќ",
+		"нос",
+		"даб",
+		"ној",
+		"сос",
+		"був",
+		"сол",
+		"врв",
+		"бес",
+		"бор",
+		"трн",
+		"жед",
+		"чад",
+		"пад",
+		"оса",
+		"кит",
+		"бел",
+		"леб",
+		"ким",
+		"раб",
+		"лет",
+		"гел",
+		"рис",
+		"дно",
+		"џеб",
+		"име",
+		"пин",
+		"грб",
+		"ехо",
+		"лов",
+		"очи",
+		"ѕид",
+		"џип",
+		"уво",
+		"ден",
+		"мов"
+		];
+
+		const lvlTwoWords = [
+		"дрво",
+		"елка",
+		"еден",
+		"шест",
+		"осум",
+		"тава",
+		"збор",
+		"грав",
+		"чаша",
+		"дете",
+		"бебе",
+		"вода",
+		"пиле",
+		"маче",
+		"куче",
+		"куќа",
+		"кола",
+		"грло",
+		"мама",
+		"тато",
+		"шише",
+		"клуч",
+		"соба",
+		"гума",
+		"игра",
+		"раце",
+		"прст",
+		"нозе",
+		"уста",
+		"деца",
+		"зимо",
+		"лето",
+		"пара",
+		"крај",
+		"лице",
+		"тест",
+		"шлаг",
+		"пена",
+		"пица",
+		"плус",
+		"капа"
+		];
+
+		const lvlThreeWords = [
+		"океан",
+		"патка",
+		"петка",
+		"ролат",
+		"сенка",
+		"ќумур",
+		"украс",
+		"хрчак",
+		"цвеќе",
+		"чевла",
+		"ајвар",
+		"домат",
+		"буква",
+		"карта",
+		"птица",
+		"клима",
+		"бисер",
+		"кабел",
+		"креда",
+		"журка",
+		"злоба",
+		"искра",
+		"куфер",
+		"љубов",
+		"мисла",
+		"опера",
+		"плоча",
+		"разум",
+		"слика",
+		"топка",
+		"флора",
+		"фауна",
+		"храна",
+		"брава",
+		"врата",
+		"ѓезве",
+		"јагне",
+		"цигла",
+		"злато",
+		"седум",
+		"сируп",
+		"минус",
+		"чекор",
+		"девет",
+		"десет",
+		"атлас"
+		];
+
+		const lvlFourWords = [
+		"надвор",
+		"четири",
+		"војник",
+		"занает",
+		"страна",
+		"кабина",
+		"центар",
+		"циркус",
+		"кактус",
+		"чаршав",
+		"посета",
+		"бојлер",
+		"кацига",
+		"џунгла",
+		"клавир",
+		"облека",
+		"сестра",
+		"жирафа",
+		"гитара"
+		];
+
+		const lvlFiveWords = [
+		"постела",
+		"пустина",
+		"планина",
+		"калциум",
+		"кабинет",		
+		"роднина",
+		"планета",
+		"фризура",
+		"инженер",
+		"леопард"
+		];
+
+		/*const lvlSixWords = [
+		"алергија",
+		"прозорец",
+		"корисник",
+		"терапија",
+		"споменик",
+		"факултет",
+		"училница",
+		"балерина",
+		"батерија",
+		"автограм",
+		"пријател",
+		"ветување",
+		"макарони",
+		"историја",
+		"автограм",
+		"меморија",
+		"календар",
+		"квалитет",
+		"шегаџија",
+		"смартфон"
+		];
+
+		const lvlSevenWords = [
+		"одделение",
+		"капацитет",
+		"телевизор",
+		"пријатели",
+		"семејство",
+		"корупција",
+		"шармантен",
+		"компјутер",
+		"табуретка",
+		"едукација",
+		"клеопатра",
+		"квантитет",
+		"тастатура",		
+		"брилијант"
+		];
+
+		const lvlEightWords = [
+		"апликација",
+		"фотоапарат",
+		"способност",
+		"девијација",		
+		"шалварчиња",
+		"екологисти"
+		];*/
+
+		function reset() {
+		level = 1;
+		score = 0;
+		correct = 0;
+		attempts = 0;
+		word = "";
+		updateBoard();
+		info.innerHTML = "";
+		userGuess.value = "";
+		}
+
+		function randomWord(lvl) {
+		word = lvl[Math.floor(Math.random() * lvl.length + 1) - 1];
+		return word;
+		}
+
+
+		// функција за мешање на буквите во зборот 
+		function scrambleWord(word) {	
+		let letters = word.split("");	// го дели зборот на низа од индекси
+		let currentIndex = letters.length,
+			temporaryValue,
+			randomIndex;
+
+		// додека се останати елементи за мешање...
+		while (0 !== currentIndex) {
+			// бира еден од останатите елементи...
+			randomIndex = Math.floor(Math.random() * currentIndex);
+			currentIndex -= 1;
+
+			// и го заменува со моменталниот елемент...
+			temporaryValue = letters[currentIndex];
+			letters[currentIndex] = letters[randomIndex];
+			letters[randomIndex] = temporaryValue;
+		}
+
+		return letters.join(" ");
+		}
+		function updateBoard() {
+		scoreOutput.innerHTML = score;
+		levelOutput.innerHTML = level;
+		attemptsOutput.innerHTML = attempts;
+		}
+
+		function checkAnswer(guess) {
+		console.log(`Correct: ${correct}`);
+		if (correct == 3) {
+			level += 1;
+			correct = 0;
+		}
+
+		if (attempts == 3) {
+			guessContainer.classList.toggle("hidden");
+			info.innerHTML =
+			"<p class='retry'>Извини. Ги потроши сите шанси. <button id='retry-button'>Обиди се повторно</button> </p>";
+			reset();
+		}
+
+		if (guess === word) {
+			info.innerHTML = "<span class='correct'>ТОЧНО</span>";
+			score += 1;
+			correct += 1;
+			attempts = 0;
+			setLevel();
+		} else {
+			info.innerHTML = "<span class='incorrect'>Упс! НЕТОЧНО</span>";
+			score -= 1;
+			attempts += 1;
+		}
+
+		updateBoard();
+		}
+
+		function setLevel() {
+		if (level == 1) {
+			randomWord(lvlOneWords);
+		} else if (level == 2) {
+			randomWord(lvlTwoWords);
+		} else if (level == 3) {
+			randomWord(lvlThreeWords);
+		} else if (level == 4) {
+			randomWord(lvlFourWords);
+		} else if (level == 5) {
+			randomWord(lvlFiveWords);
+		} else if (level == 6) {
+			/*randomWord(lvlSixWords);
+		} else if (level == 7) {
+			randomWord(lvlSevenWords);
+		} else if (level == 8) {
+			randomWord(lvlEightWords);
+		} else if (level == 9) {*/
+			info.innerHTML =
+			"<span class='win'>ЈА ПОБЕДИ ИГРАТА! </br> Можеш да ресетираш и да продолжиш со играње.</span>";
+		}
+
+		console.log(`Word: ${word}`);
+		usersWord.innerHTML = scrambleWord(word);
+		}
+
+		playBtn.addEventListener("click", function(e) {
+		rules.classList.toggle("hidden");
+		gameContainer.classList.remove("hidden");
+		});
+
+		instrBtn.addEventListener("click", function(e) {
+		instr.style.opacity = 1;
+		instr.style.display = 'block';
+
+		// за да кога ќе се кликне на ИНСТРУКЦИИ, да не се дава текстот за КРЕДИТИ
+		credits.style.opacity = 0;
+		credits.style.display = 'none';
+		});
+
+		creditsBtn.addEventListener("click", function(e) {
+		credits.style.opacity = 1;
+		credits.style.display = 'block';
+
+		// за да кога ќе се кликне на КРЕДИТИ, да не се дава текстот за ИНСТРУКЦИИ
+		instr.style.opacity = 0;
+		instr.style.display = 'none';
+		});
+
+		submitBtn.addEventListener("click", function(e) {
+		checkAnswer(userGuess.value.toLowerCase());
+		userGuess.value = "";
+		});
+
+
+		// функција која се активира во случај да е кликнато на копчето Enter од тастатура
+		// клуниот код (клучот) за Enter е 13 (по автоматизам/default)
+		// затоа доле во функцијата проверуваме дали keyCode е 13, т.е. проверуваме дали е кликнато на Enter
+		window.addEventListener(
+		"keypress",
+		function(e) {
+			if (e.keyCode == 13) {
+			checkAnswer(userGuess.value.toLowerCase());
+			userGuess.value = "";
+			}
+		},
+		false
+		);
+
+		resetBtn.addEventListener("click", function(e) {
+		reset();
+		setLevel();
+		guessContainer.classList.remove("hidden");
+		userGuess.value = "";
+		});
+
+		setLevel();
+
+
+
+		//функција за копчето МЕНИ
+		//при притискање на копчето МЕНИ се рефрешира страната и се враќаме на почетниот екран
+		function goToMenu() {	//функцијата goToMenu() ни е зададена и во самото копче
+			location.reload();
+		}
+ 
+		
+	
+		
+
+
+	</script>
+
+  
+</body>
+
+</html>
